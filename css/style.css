@@ -351,6 +351,13 @@ p:last-child { margin-bottom: 0; }
   .nav.is-open { transform: translateX(0); visibility: visible; }
   .nav a { font-size: .9375rem; padding-block: .95rem; letter-spacing: .14em; }
   .nav-cta { display: inline-flex; margin-top: 1.75rem; }
+
+  /* The drawer CTA is an <a> inside .nav, so `.nav a` outranked the button's
+     own foreground and painted the label bone at .8 opacity while the arrow
+     stayed navy. Both are bone now, at full strength, so the button reads as
+     one piece. The hover rule needs the extra class to beat `.nav a:hover`. */
+  .nav .nav-cta { color: var(--bone); opacity: 1; }
+  .nav .nav-cta:hover { color: var(--bone); }
 }
 
 @media (min-width: 1100px) { .burger { display: none; } }
@@ -1860,6 +1867,93 @@ p:last-child { margin-bottom: 0; }
 }
 @media (min-width: 1300px) {
   .switch--sectors .switch__tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* On a phone the tab grid and the panel below it are too far apart to read as
+   one control: tapping a sector near the bottom of twelve opened a panel that
+   was already off the screen, so nothing appeared to happen. Below 700px the
+   same markup is laid out as an accordion instead. The tab list is unwrapped
+   with display:contents so its buttons become flex children of the switcher,
+   then order interleaves each panel directly beneath its own tab. No markup
+   or script changes, and the tablist keeps working exactly as before. */
+@media (max-width: 699px) {
+  .switch { display: flex; flex-direction: column; }
+  .switch__tabs { display: contents; }
+
+  .switch__tab {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: .85rem;
+    min-height: 0;
+    padding: .8rem 1rem;
+    text-align: left;
+    border: 1px solid var(--ink-line);
+    border-top: 0;
+  }
+  .switch__tab:first-child { border-top: 1px solid var(--ink-line); }
+  .switch--light .switch__tab { border-color: var(--bone-line); }
+
+  /* A caret so the row reads as something that opens, drawn rather than
+     fetched so no page carries another icon file for it. */
+  .switch__tab::after {
+    content: '';
+    flex: none;
+    width: .45rem;
+    height: .45rem;
+    margin-left: auto;
+    margin-right: .15rem;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: translateY(-2px) rotate(45deg);
+    opacity: .5;
+    transition: transform .3s var(--ease), opacity .3s var(--ease);
+  }
+  .switch__tab[aria-selected='true']::after {
+    transform: translateY(1px) rotate(-135deg);
+    opacity: 1;
+  }
+
+  /* The open panel is a card hanging off the row that opened it. */
+  .switch__panel {
+    padding: 1.4rem 1.1rem 1.85rem;
+    border: 1px solid var(--ink-line);
+    border-top: 0;
+    background: var(--ink-raised);
+  }
+  .switch--light .switch__panel { border-color: var(--bone-line); background: var(--bone); }
+
+  .switch__intro { margin-bottom: 1.35rem; }
+  .switch__intro h3 { font-size: 1.4rem; max-width: none; }
+  .switch__intro p { margin-top: .9rem; font-size: .9375rem; }
+
+  /* Tab n and the panel it controls take orders 2n-1 and 2n. Panels are
+     children of the switcher after the tab list, so panel n is nth-child
+     n+1. Twelve pairs covers the sectors; four covers the freight modes. */
+  .switch__tab:nth-child(1)   { order: 1; }
+  .switch__panel:nth-child(2) { order: 2; }
+  .switch__tab:nth-child(2)   { order: 3; }
+  .switch__panel:nth-child(3) { order: 4; }
+  .switch__tab:nth-child(3)   { order: 5; }
+  .switch__panel:nth-child(4) { order: 6; }
+  .switch__tab:nth-child(4)   { order: 7; }
+  .switch__panel:nth-child(5) { order: 8; }
+  .switch__tab:nth-child(5)   { order: 9; }
+  .switch__panel:nth-child(6) { order: 10; }
+  .switch__tab:nth-child(6)   { order: 11; }
+  .switch__panel:nth-child(7) { order: 12; }
+  .switch__tab:nth-child(7)   { order: 13; }
+  .switch__panel:nth-child(8) { order: 14; }
+  .switch__tab:nth-child(8)   { order: 15; }
+  .switch__panel:nth-child(9) { order: 16; }
+  .switch__tab:nth-child(9)    { order: 17; }
+  .switch__panel:nth-child(10) { order: 18; }
+  .switch__tab:nth-child(10)   { order: 19; }
+  .switch__panel:nth-child(11) { order: 20; }
+  .switch__tab:nth-child(11)   { order: 21; }
+  .switch__panel:nth-child(12) { order: 22; }
+  .switch__tab:nth-child(12)   { order: 23; }
+  .switch__panel:nth-child(13) { order: 24; }
 }
 
 /* ----------------------------------------------------------- process ---- */

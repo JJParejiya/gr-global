@@ -133,18 +133,47 @@
     var panels = Array.prototype.slice.call(sw.querySelectorAll('[role="tabpanel"]'));
     if (!tabs.length || tabs.length !== panels.length) return;
 
-    function select(index, moveFocus) {
+    // Below 700px the panels sit inside the tab list as an accordion. There
+    // the switcher starts with every panel shut, a row toggles its own panel
+    // open and closed, and opening one closes whichever was open before, so
+    // only ever one is showing. Above the breakpoint it stays a tab strip,
+    // where a panel has to be open or the layout has nothing under the tabs.
+    var accordion = window.matchMedia('(max-width: 699px)');
+
+    var open = -1;    // panel currently showing, -1 when all are shut
+    var cursor = 0;   // row that holds the roving tabindex
+
+    function paint(moveFocus) {
       tabs.forEach(function (tab, n) {
-        var on = n === index;
+        var on = n === open;
         tab.setAttribute('aria-selected', on ? 'true' : 'false');
-        tab.tabIndex = on ? 0 : -1;
+        tab.setAttribute('aria-expanded', on ? 'true' : 'false');
+        tab.tabIndex = n === cursor ? 0 : -1;
         panels[n].hidden = !on;
       });
-      if (moveFocus) tabs[index].focus();
+      if (moveFocus) tabs[cursor].focus();
+    }
+
+    function select(index, moveFocus) {
+      open = index;
+      cursor = index;
+      paint(moveFocus);
     }
 
     tabs.forEach(function (tab, i) {
-      tab.addEventListener('click', function () { select(i, false); });
+      tab.addEventListener('click', function () {
+        if (!accordion.matches) { select(i, false); return; }
+
+        // Closing a panel above the tapped row pulls everything under it
+        // upwards. Measuring the row before and after and correcting the
+        // scroll by the difference leaves it under the finger that tapped it.
+        var before = tab.getBoundingClientRect().top;
+        cursor = i;
+        open = open === i ? -1 : i;
+        paint(false);
+        var shift = tab.getBoundingClientRect().top - before;
+        if (shift) window.scrollBy(0, shift);
+      });
 
       tab.addEventListener('keydown', function (e) {
         var next = null;
@@ -154,7 +183,13 @@
         else if (e.key === 'End') next = tabs.length - 1;
         if (next === null) return;
         e.preventDefault();
-        select(next, true);
+
+        // As an accordion the arrows walk the rows without opening them;
+        // Enter or Space on the focused row does that. As a tab strip the
+        // arrows select, which is what the pattern expects.
+        cursor = next;
+        if (accordion.matches) paint(true);
+        else select(next, true);
       });
     });
 
@@ -175,8 +210,21 @@
       return false;
     }
 
-    if (!fromHash(false)) select(0, false);
+    // A hash from the mega menu opens that one on either layout. Without one
+    // the tab strip opens its first panel and the accordion opens nothing.
+    if (!fromHash(false)) {
+      if (accordion.matches) paint(false);
+      else select(0, false);
+    }
     window.addEventListener('hashchange', function () { fromHash(true); });
+
+    // Widening back to the tab strip with everything shut would leave the tabs
+    // sitting on an empty band, so a panel is opened on the way across.
+    var onAccordionChange = function () {
+      if (!accordion.matches && open < 0) select(cursor, false);
+    };
+    if (accordion.addEventListener) accordion.addEventListener('change', onAccordionChange);
+    else if (accordion.addListener) accordion.addListener(onAccordionChange);
   });
 
   /* ------------------------------------------------------------ lightbox
