@@ -1705,13 +1705,6 @@ p:last-child { margin-bottom: 0; }
 .gallery li { overflow: hidden; }
 .gallery li:hover img { transform: scale(1.045); }
 
-/* Road freight has only the one photograph so far. Rather than leave it
-   sitting in a quarter of an empty grid, it runs the full width. */
-/* Doubled class so this beats the column counts in the width queries below,
-   whatever order they end up in. */
-.gallery.gallery--sparse { grid-template-columns: minmax(0, 1fr); }
-.gallery--sparse img { aspect-ratio: 21 / 9; }
-
 /* One photograph per row on a phone. At two the cargo in each shot was too
    small to make out, which is the whole point of the gallery. */
 @media (min-width: 560px) {
