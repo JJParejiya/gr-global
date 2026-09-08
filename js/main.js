@@ -366,13 +366,25 @@
      The poster image is the LCP element. The video is attached only after
      the page has loaded, and only where it is worth the bandwidth. */
 
+  /* The clip is published at several sizes. It is a background sitting under a
+     heavy gradient, so a phone gains nothing visible from the 1080p file and
+     would pay 17MB for it. Pick by viewport, and fall back to whatever the
+     markup names if the URL is not one of the sized ones. */
+  function heroVideoSrc(url) {
+    var want = window.innerWidth >= 1400 ? '1080p'
+             : window.innerWidth >= 900 ? '720p'
+             : '480p';
+    return /\/\d{3,4}p\//.test(url) ? url.replace(/\/\d{3,4}p\//, '/' + want + '/') : url;
+  }
+
   function loadHeroVideo() {
     var mount = document.querySelector('[data-video]');
     if (!mount) return;
 
     if (reduced) return;
-    if (window.matchMedia('(max-width: 899px)').matches) return;
 
+    // No width gate any more: phones get the video too, just a smaller file.
+    // Data saver and 2G are still respected, where the poster alone is kinder.
     var c = navigator.connection;
     if (c && (c.saveData || /2g/.test(c.effectiveType || ''))) return;
 
@@ -382,10 +394,12 @@
     v.loop = true;
     v.playsInline = true;
     v.setAttribute('playsinline', '');
+    // iOS checks the attribute, not just the property, before it will autoplay.
+    v.setAttribute('muted', '');
     v.setAttribute('aria-hidden', 'true');
     v.tabIndex = -1;
     v.preload = 'auto';
-    v.src = mount.dataset.video;
+    v.src = heroVideoSrc(mount.dataset.video);
 
     v.addEventListener('canplay', function () {
       v.classList.add('is-ready');
