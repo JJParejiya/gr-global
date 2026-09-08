@@ -1,0 +1,15 @@
+# Holds the live mailbox password. Never commit it. Copy
+# inc/mail-config.example.php to inc/mail-config.php on the server and fill in
+# the real values there.
+inc/mail-config.php
+
+# Written by the enquiry handler when a send fails. May contain visitor data.
+inc/mail-error.log
+*.log
+
+# OS and editor noise
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/

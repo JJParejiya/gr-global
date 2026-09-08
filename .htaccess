@@ -1,0 +1,68 @@
+# GR Global — compression and cache headers.
+# These two blocks are what Lighthouse checks for under "Enable text
+# compression" and "Serve static assets with an efficient cache policy".
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml
+  AddOutputFilterByType DEFLATE application/javascript application/json
+  AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+<IfModule mod_brotli.c>
+  AddOutputFilterByType BROTLI_COMPRESS text/html text/css text/plain text/xml
+  AddOutputFilterByType BROTLI_COMPRESS application/javascript application/json
+  AddOutputFilterByType BROTLI_COMPRESS image/svg+xml
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+
+  # Fingerprint-free assets, so keep HTML short and everything else long.
+  ExpiresByType text/html                 "access plus 0 seconds"
+
+  ExpiresByType text/css                  "access plus 1 year"
+  ExpiresByType application/javascript    "access plus 1 year"
+
+  ExpiresByType image/webp                "access plus 1 year"
+  ExpiresByType image/png                 "access plus 1 year"
+  ExpiresByType image/jpeg                "access plus 1 year"
+  ExpiresByType image/svg+xml             "access plus 1 year"
+
+  ExpiresByType font/woff2                "access plus 1 year"
+</IfModule>
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(css|js|webp|png|jpe?g|svg|woff2)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  <FilesMatch "\.html$">
+    Header set Cache-Control "public, max-age=0, must-revalidate"
+  </FilesMatch>
+
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType image/webp .webp
+  AddType font/woff2 .woff2
+</IfModule>
+
+# Serve /about instead of /about.html when someone types it.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{REQUEST_FILENAME}.html -f
+  RewriteCond %{REQUEST_URI} !\.html$
+  RewriteRule ^(.+)$ $1.html [L]
+</IfModule>
+
+# The mail config holds a live mailbox password and the SMTP client is an
+# include, not a page. Neither should ever be reachable over HTTP.
+<IfModule mod_authz_core.c>
+  <FilesMatch "\.(log)$">
+    Require all denied
+  </FilesMatch>
+</IfModule>
+
+RedirectMatch 404 ^/inc(/.*)?$

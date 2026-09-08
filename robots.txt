@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# thank-you.html is deliberately not disallowed here. It carries a noindex
+# meta tag, and a crawler has to be able to fetch the page to see that tag.
+# Blocking it in robots.txt would leave the URL eligible for indexing.
+
+Sitemap: https://grglobal.co.in/sitemap.xml

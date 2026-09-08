@@ -1,0 +1,2151 @@
+/* ==========================================================================
+   GR Global — full-bleed editorial layout system.
+
+   Sections run edge to edge. Nothing sits in a centred 1280px box. Reading
+   measure is held by max-width on the text itself, not by a wrapper.
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('../fonts/cormorant-var.woff2') format('woff2-variations');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Public Sans';
+  src: url('../fonts/publicsans-var.woff2') format('woff2-variations');
+  font-weight: 300 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Deep navy pulled from the logo's own blue (#4060B0), darkened.
+     Header, footer and every dark band share it. */
+  --ink:        #0C1B33;
+  /* The second navy. It has to read as a different colour at a glance, not
+     just measure as one, because whole sections are separated by it. */
+  --ink-raised: #17314F;
+  --ink-line:   rgba(246, 243, 237, .15);
+  --ink-line-2: rgba(184, 150, 74, .34);
+
+  --bone:       #F6F3ED;
+  --bone-sink:  #ECE6DA;
+  --bone-line:  rgba(12, 27, 51, .13);
+  --bone-line-2: rgba(184, 150, 74, .4);
+
+  --gold:       #B8964A;
+  --gold-lift:  #DCC182;
+  --error:      #E06B6B;
+
+  /* The brand gold is legible on navy but only reaches 2.6:1 on the bone
+     background, well under the 4.5:1 that small text needs. This darker
+     bronze reaches 5.3:1 and is used for gold *text* on light bands. Borders
+     and fills keep the brand gold, where contrast does not apply. */
+  --gold-deep:  #7F6024;
+
+  /* Resolves to whichever of the two suits the band it sits in. Dark
+     containers below reset it; everything else inherits the light default. */
+  --gold-text:  var(--gold-deep);
+
+  --on-dark:        #F6F3ED;
+  --on-dark-muted:  rgba(246, 243, 237, .64);
+  --on-light:       #0C1B33;
+  --on-light-muted: #525C66;
+
+  --display: 'Cormorant Garamond', 'Times New Roman', serif;
+  --sans: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+
+  --gutter: clamp(1.25rem, 4.2vw, 5.5rem);
+  --band: clamp(3.5rem, 6vw, 6.5rem);
+  --measure: 34rem;
+  --measure-wide: 46rem;
+
+  --ease: cubic-bezier(.22, .61, .36, 1);
+}
+
+/* Every dark surface on the site. Inside these the brand gold is legible at
+   6.1:1, so it takes back over from the darker bronze. Listed in one place so
+   a new dark section only has to be added here. */
+.band--dark,
+.hero,
+.page-hero,
+.site-header,
+.site-footer,
+.thanks,
+.mega,
+.lightbox { --gold-text: var(--gold); }
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bone);
+  color: var(--on-light);
+  font-family: var(--sans);
+  font-size: 1rem;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+img { display: block; max-width: 100%; }
+video { display: block; }
+
+/* Icons are separate .svg files loaded as images, never inline markup. */
+.ico { width: 16px; height: 16px; flex: none; }
+a { color: inherit; }
+button { font: inherit; }
+
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+/* Full-bleed row with side padding. No max-width anywhere. */
+.shell { width: 100%; padding-inline: var(--gutter); }
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  z-index: 100;
+  background: var(--ink);
+  color: var(--on-dark);
+  padding: .75rem 1.25rem;
+}
+.skip:focus { left: 0; top: 0; }
+
+/* --------------------------------------------------------------- type ---- */
+
+.display {
+  font-family: var(--display);
+  font-weight: 300;
+  line-height: 1.02;
+  letter-spacing: -.018em;
+  margin: 0;
+  max-width: 22ch;
+}
+
+h1.display { font-size: clamp(3rem, 7.6vw, 7rem); }
+h2.display { font-size: clamp(2.35rem, 5.2vw, 4.75rem); }
+
+.display--quote {
+  font-style: italic;
+  font-size: clamp(1.85rem, 3.4vw, 3.15rem);
+  line-height: 1.24;
+  max-width: 19ch;
+}
+
+h3, h4 { font-family: var(--sans); line-height: 1.3; margin: 0; }
+h3 { font-size: 1.25rem; font-weight: 600; letter-spacing: -.005em; }
+h4 { font-size: 1rem; font-weight: 600; }
+
+p { margin: 0 0 1.15em; }
+p:last-child { margin-bottom: 0; }
+
+.lead {
+  max-width: var(--measure);
+  font-size: clamp(1.0625rem, 1.35vw, 1.1875rem);
+  line-height: 1.7;
+  color: var(--on-light-muted);
+}
+.display + .lead,
+.display + p { margin-top: 1.6rem; }
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+  margin: 0 0 1.35rem;
+  font-size: .6875rem;
+  font-weight: 600;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--gold-text);
+}
+.eyebrow::before {
+  content: '';
+  width: clamp(1.75rem, 3.5vw, 3.5rem);
+  height: 1px;
+  background: currentColor;
+  flex: none;
+}
+
+/* Numerals used as section indices. */
+.numeral {
+  display: block;
+  font-family: var(--display);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--gold-text);
+  font-variant-numeric: lining-nums;
+}
+
+/* ------------------------------------------------------------ buttons ---- */
+
+.btn {
+  --btn-bg: var(--ink);
+  --btn-fg: var(--bone);
+  --btn-bd: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: .8rem;
+  padding: 1.15rem 2.25rem;
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  border: 1px solid var(--btn-bd);
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .4s var(--ease), color .4s var(--ease), border-color .4s var(--ease);
+}
+.btn .ico { width: 15px; height: 15px; flex: none; transition: transform .4s var(--ease); }
+.btn:hover .ico { transform: translate(3px, -3px); }
+
+.btn--gold { --btn-bg: var(--gold); --btn-fg: var(--ink); --btn-bd: var(--gold); }
+.btn--gold:hover { --btn-bg: var(--gold-lift); --btn-bd: var(--gold-lift); }
+
+.btn--ghost {
+  --btn-bg: transparent;
+  --btn-fg: var(--on-dark);
+  --btn-bd: rgba(246, 243, 237, .34);
+}
+.btn--ghost:hover { --btn-bd: var(--gold); --btn-fg: var(--gold-lift); }
+
+.textlink {
+  display: inline-flex;
+  align-items: center;
+  gap: .7rem;
+  padding-bottom: .4rem;
+  border-bottom: 1px solid var(--gold);
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: inherit;
+  transition: gap .4s var(--ease);
+}
+.textlink:hover { gap: 1.15rem; }
+.textlink .ico { width: 14px; height: 14px; }
+
+/* ------------------------------------------------------------- header ---- */
+
+.site-header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 60;
+  padding-block: clamp(.75rem, 1.3vw, 1.15rem);
+  color: var(--on-dark);
+  transition: background .45s var(--ease), padding .45s var(--ease);
+}
+.site-header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(to bottom, rgba(12, 27, 51, .78), rgba(12, 27, 51, 0));
+  transition: opacity .45s var(--ease);
+}
+.site-header.is-stuck {
+  background: rgba(12, 27, 51, .96);
+  padding-block: .55rem;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+/* The blur is applied only on the wide layout, and this is not cosmetic
+   caution. A backdrop-filter makes its element the containing block for any
+   position:fixed descendant. Below 1100px the nav *is* a fixed full-height
+   drawer inside this header, so once the header went sticky the drawer was
+   being positioned against the header instead of the viewport and collapsed
+   into a sliver. At 96% opacity the blur is barely visible anyway. */
+@media (min-width: 1100px) {
+  .site-header.is-stuck { backdrop-filter: blur(12px); }
+}
+.site-header.is-stuck::after { opacity: 0; }
+
+.site-header .shell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.brand { display: block; flex: none; line-height: 0; }
+.brand img {
+  width: 178px;
+  height: auto;
+  transition: width .45s var(--ease);
+}
+.is-stuck .brand img { width: 146px; }
+
+.nav { display: flex; align-items: center; gap: clamp(1.15rem, 2vw, 2.35rem); }
+.nav a {
+  position: relative;
+  font-size: .75rem;
+  font-weight: 500;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--on-dark);
+  opacity: .8;
+  transition: opacity .3s var(--ease), color .3s var(--ease);
+}
+.nav a:hover,
+.nav a[aria-current='page'] { opacity: 1; color: var(--gold-lift); }
+
+.nav-cta { display: none; }
+
+.burger {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 44px;
+  height: 44px;
+  margin-right: -6px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+}
+.burger span {
+  display: block;
+  width: 25px;
+  height: 1.5px;
+  flex: none;
+  background: currentColor;
+  transition: transform .35s var(--ease), opacity .25s var(--ease);
+}
+.burger[aria-expanded='true'] span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+.burger[aria-expanded='true'] span:nth-child(2) { opacity: 0; }
+.burger[aria-expanded='true'] span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+@media (max-width: 1099px) {
+  .nav {
+    position: fixed;
+    inset: 0 0 0 auto;
+    width: min(22rem, 86vw);
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: .25rem;
+    padding: 5rem var(--gutter) 3rem;
+    background: var(--ink);
+    border-left: 1px solid var(--ink-line-2);
+    transform: translateX(100%);
+    visibility: hidden;
+    transition: transform .5s var(--ease), visibility .5s;
+  }
+  .nav.is-open { transform: translateX(0); visibility: visible; }
+  .nav a { font-size: .9375rem; padding-block: .95rem; letter-spacing: .14em; }
+  .nav-cta { display: inline-flex; margin-top: 1.75rem; }
+}
+
+@media (min-width: 1100px) { .burger { display: none; } }
+
+/* ---------------------------------------------------------- mega menu ---- */
+
+/* Services and Industries drop a full-width panel under the header. The panel
+   is positioned against .site-header, which is fixed and therefore the
+   containing block, so it spans the viewport rather than the nav item. */
+.nav__item { position: static; }
+
+/* The label is a real link, so Services and Industries still go to their own
+   listing pages. Opening the panel is a separate small button beside it,
+   which keeps both actions reachable by keyboard and on a touch screen. */
+.nav__item { display: inline-flex; align-items: center; gap: .45rem; }
+
+.nav__toggle {
+  font-size: .75rem;
+  font-weight: 500;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--on-dark);
+  opacity: .8;
+  transition: opacity .3s var(--ease), color .3s var(--ease);
+}
+.nav__toggle:hover,
+.nav__toggle[aria-current],
+.has-mega.is-open .nav__toggle { opacity: 1; color: var(--gold-lift); }
+
+.nav__more {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: var(--on-dark);
+  opacity: .8;
+  transition: opacity .3s var(--ease), color .3s var(--ease);
+}
+.nav__more:hover,
+.has-mega.is-open .nav__more { opacity: 1; color: var(--gold-lift); }
+
+/* Chevron drawn in CSS so it can rotate without swapping an icon file. */
+.nav__caret {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform .35s var(--ease);
+}
+.has-mega.is-open .nav__caret { transform: translateY(1px) rotate(225deg); }
+
+.mega {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  max-height: calc(100vh - 5rem);
+  overflow-y: auto;
+  background: var(--ink-raised);
+  border-top: 1px solid var(--ink-line-2);
+  border-bottom: 1px solid var(--ink-line-2);
+  box-shadow: 0 28px 56px rgba(0, 0, 0, .38);
+  display: none;
+}
+
+/* Closed with display:none rather than visibility. A lazy image inside a
+   visibility:hidden box still counts as on screen and downloads anyway, and
+   the two panels carry 415KB of thumbnails between them. This way nothing is
+   fetched until someone actually opens a menu. The entrance is an animation
+   rather than a transition for the same reason: there is no open state to
+   transition from. */
+.has-mega.is-open > .mega { display: block; animation: mega-in .28s var(--ease) both; }
+
+@keyframes mega-in {
+  from { opacity: 0; transform: translateY(-10px); }
+}
+
+.mega__inner {
+  display: grid;
+  gap: clamp(1.5rem, 3vw, 3.5rem);
+  padding-block: clamp(1.75rem, 3vw, 2.75rem);
+}
+.mega__lead .eyebrow { margin-bottom: 1rem; }
+.mega__lead h2 {
+  margin: 0 0 1.5rem;
+  max-width: 14ch;
+  font-family: var(--display);
+  font-weight: 300;
+  font-size: clamp(1.5rem, 2.2vw, 2.1rem);
+  line-height: 1.1;
+  letter-spacing: -.018em;
+  color: var(--on-dark);
+}
+.mega__lead p { font-size: .9375rem; color: var(--on-dark-muted); max-width: 22rem; }
+
+/* Four freight modes: photograph on top, mode icon and name beneath. */
+.mega__cards {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--ink-line);
+  border: 1px solid var(--ink-line);
+}
+.mega__cards a {
+  display: block;
+  padding: .9rem;
+  background: var(--ink-raised);
+  text-decoration: none;
+  transition: background .3s var(--ease);
+}
+.mega__cards a:hover,
+.mega__cards a:focus-visible { background: var(--ink); }
+.mega__cards img.mega__shot {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+.mega__cards b {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  margin-top: .9rem;
+  font-size: .8125rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--on-dark);
+}
+.mega__cards b .ico { width: 20px; height: 20px; }
+.mega__cards small {
+  display: block;
+  margin-top: .4rem;
+  font-size: .8125rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--on-dark-muted);
+}
+
+/* Twelve sectors: a small square photograph beside the name. */
+.mega__list {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--ink-line);
+  border: 1px solid var(--ink-line);
+}
+.mega__list a {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr);
+  gap: .9rem;
+  align-items: center;
+  padding: .6rem .8rem;
+  background: var(--ink-raised);
+  text-decoration: none;
+  transition: background .3s var(--ease);
+}
+.mega__list a:hover,
+.mega__list a:focus-visible { background: var(--ink); }
+.mega__list img {
+  width: 3rem;
+  height: 3rem;
+  object-fit: cover;
+}
+.mega__list span {
+  font-size: .8125rem;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--on-dark);
+}
+
+@media (min-width: 1100px) {
+  .mega__inner { grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); align-items: start; }
+  .mega__cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .mega__list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* Inside the mobile drawer the panel is just an indented list. The photographs
+   are dropped there: at that width they cost bandwidth without helping. */
+@media (max-width: 1099px) {
+  /* The drawer now holds two expandable menus, so it starts at the top and
+     scrolls. Centring it would clip the first rows once a menu is open,
+     because a flex container overflowing a centred axis cuts off the start. */
+  .nav { justify-content: flex-start; overflow-y: auto; overscroll-behavior: contain; }
+
+  /* In the drawer the label and the expander sit on one row: tapping the name
+     goes to the listing page, tapping the chevron opens the sub-list. */
+  .nav__item, .has-mega { display: flex; flex-wrap: wrap; width: 100%; align-items: center; }
+  .nav__toggle {
+    flex: 1;
+    font-size: .9375rem;
+    padding-block: .95rem;
+    letter-spacing: .14em;
+  }
+  .nav__more { width: 44px; height: 44px; margin-right: -6px; }
+  .mega { flex-basis: 100%; }
+  .mega {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    background: none;
+    border: 0;
+    box-shadow: none;
+  }
+  .has-mega.is-open > .mega { animation: none; }
+  .mega__inner { padding-block: 0 .75rem; gap: .75rem; }
+  .mega .shell { padding-inline: 0; }
+  .mega__lead { display: none; }
+  .mega__cards,
+  .mega__list { background: none; border: 0; gap: 0; }
+  .mega__cards a,
+  .mega__list a {
+    grid-template-columns: 1fr;
+    padding: .55rem 0 .55rem 1rem;
+    background: none;
+    border-left: 1px solid var(--ink-line-2);
+  }
+  .mega__cards img.mega__shot,
+  .mega__list img { display: none; }
+  .mega__cards b { margin-top: 0; font-size: .8125rem; }
+  .mega__cards small { display: none; }
+}
+
+/* --------------------------------------------------------------- hero ---- */
+
+.hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding-top: 9rem;
+  background: var(--ink);
+  color: var(--on-dark);
+  overflow: hidden;
+}
+
+.hero__media { position: absolute; inset: 0; z-index: 0; }
+.hero__media img,
+.hero__media video { width: 100%; height: 100%; object-fit: cover; }
+.hero__media video {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.3s var(--ease);
+}
+.hero__media video.is-ready { opacity: 1; }
+.hero__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right, rgba(12, 27, 51, .94) 0%, rgba(12, 27, 51, .6) 48%, rgba(12, 27, 51, .26) 100%),
+    linear-gradient(to top, rgba(12, 27, 51, .92) 0%, rgba(12, 27, 51, 0) 52%);
+}
+
+.hero__inner { position: relative; z-index: 1; padding-bottom: clamp(3rem, 6vw, 5rem); }
+/* The hero stays left aligned; only the section heads below are centred. */
+.hero .eyebrow { justify-content: flex-start; }
+.hero .eyebrow::after { display: none; }
+.hero h1 { color: var(--on-dark); max-width: 16ch; }
+.hero h1 em { font-style: italic; color: var(--gold-lift); }
+
+.hero__lead {
+  max-width: 33rem;
+  margin-top: 1.9rem;
+  font-size: clamp(1.0625rem, 1.4vw, 1.1875rem);
+  color: var(--on-dark-muted);
+}
+
+.hero__actions { display: flex; flex-wrap: wrap; gap: .9rem; margin-top: 2.75rem; }
+
+.hero__modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .7rem 1.75rem;
+  margin: 3rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: .6875rem;
+  font-weight: 600;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--on-dark-muted);
+}
+.hero__modes li { display: flex; align-items: center; gap: .7rem; }
+.hero__modes li::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  background: var(--gold);
+  transform: rotate(45deg);
+}
+
+/* -------------------------------------------------------------- stats ---- */
+
+.stats {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid var(--ink-line-2);
+  background: rgba(12, 27, 51, .58);
+  backdrop-filter: blur(8px);
+}
+.stats ol {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  margin: 0;
+  padding-inline: var(--gutter);
+  padding-block: 0;
+  list-style: none;
+}
+.stats li { padding: 1.6rem 0; border-top: 1px solid var(--ink-line); }
+.stats li:nth-child(-n+2) { border-top: 0; }
+.stats li:nth-child(2n) {
+  border-left: 1px solid var(--ink-line);
+  padding-left: clamp(1.25rem, 3vw, 3rem);
+}
+
+/* Figures use the sans. Cormorant ships old-style numerals, which turn 1
+   into an I and 0 into an O at this size. */
+.stat__num {
+  display: block;
+  font-family: var(--sans);
+  font-size: clamp(1.9rem, 3vw, 2.9rem);
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -.02em;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--on-dark);
+}
+.stat__label {
+  display: block;
+  margin-top: .7rem;
+  font-size: .625rem;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--on-dark-muted);
+}
+
+@media (min-width: 800px) {
+  .stats ol { grid-template-columns: repeat(4, 1fr); }
+  .stats li {
+    padding: 2.25rem 0 2.25rem clamp(1.5rem, 3vw, 3.25rem);
+    border-top: 0;
+    border-left: 1px solid var(--ink-line);
+  }
+  .stats li:first-child { border-left: 0; padding-left: 0; }
+}
+
+/* --------------------------------------------------------------- band ---- */
+
+.band { padding-block: var(--band); }
+.band--flush { padding-block: 0; }
+.band--dark { background: var(--ink); color: var(--on-dark); }
+.band--sink { background: var(--bone-sink); }
+
+/* A second dark tone, so two dark sections can meet and still show a seam.
+   Always used alongside band--dark, which supplies the text colours; this
+   only swaps the background. Same rule as the two bone tones on the light
+   side: no two neighbouring sections ever share a background. */
+.band--raised { background: var(--ink-raised); }
+.band--dark .display { color: var(--on-dark); }
+.band--dark .lead,
+.band--dark p { color: var(--on-dark-muted); }
+
+/* Only the section head is centred: its eyebrow, heading and standfirst.
+   Everything inside the section below it keeps its own alignment. */
+.band-head {
+  margin-bottom: clamp(2.5rem, 4.5vw, 4rem);
+  text-align: center;
+}
+.band-head .eyebrow { justify-content: center; }
+.band-head .eyebrow::after {
+  content: '';
+  width: clamp(1.75rem, 3.5vw, 3.5rem);
+  height: 1px;
+  background: currentColor;
+  flex: none;
+}
+.band-head .display,
+.band-head .lead {
+  max-width: 24ch;
+  margin-inline: auto;
+}
+.band-head .lead { max-width: 44rem; }
+.band-head--tight { margin-bottom: clamp(1.5rem, 2.5vw, 2.25rem); }
+
+/* -------------------------------------------------------------- intro ---- */
+
+.split {
+  display: grid;
+  align-items: stretch;
+}
+.split__media { position: relative; margin: 0; min-height: 60vw; }
+.split__media img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.split__stamp {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 1.5rem 1.75rem;
+  background: var(--gold);
+  color: var(--ink);
+}
+.split__stamp b {
+  display: block;
+  font-family: var(--sans);
+  font-size: 2.5rem;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -.02em;
+  font-variant-numeric: lining-nums;
+}
+.split__stamp span {
+  display: block;
+  margin-top: .35rem;
+  font-size: .625rem;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+
+.split__body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(2.75rem, 5.5vw, 5.5rem) var(--gutter);
+}
+.split__body > * { max-width: var(--measure-wide); }
+.split__body > .lead { max-width: 38rem; }
+
+@media (min-width: 900px) {
+  .split { grid-template-columns: minmax(0, 46%) minmax(0, 54%); }
+  .split__media { min-height: 100%; }
+  .split--flip .split__media { order: 2; }
+}
+
+.assurance {
+  margin: 2.25rem 0 2.5rem;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--bone-line);
+  max-width: var(--measure);
+}
+.assurance li {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: .9rem 0;
+  border-bottom: 1px solid var(--bone-line);
+  font-weight: 500;
+}
+.assurance .ico { width: 17px; height: 17px; }
+
+/* ----------------------------------------------------------- services ---- */
+
+.filmstrip {
+  display: grid;
+  grid-template-columns: 1fr;
+  border-top: 1px solid var(--ink-line);
+}
+.service {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.service__img { position: relative; aspect-ratio: 3 / 2; overflow: hidden; }
+.service__img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(.7) brightness(.8);
+  transition: transform 1s var(--ease), filter .7s var(--ease);
+}
+.service:hover .service__img img { transform: scale(1.05); filter: saturate(1) brightness(.95); }
+
+.service__body { padding: clamp(1.75rem, 2.6vw, 2.5rem); }
+.service__ico { width: 38px; height: 38px; margin: 0 0 1.1rem; }
+.service h3 { color: var(--on-dark); }
+.service p { margin-top: .9rem; font-size: .9375rem; line-height: 1.8; }
+
+@media (min-width: 640px) {
+  .filmstrip { grid-template-columns: repeat(2, 1fr); }
+  .service { border-left: 1px solid var(--ink-line); }
+  .service:nth-child(2n+1) { border-left: 0; }
+  .service__img { aspect-ratio: 4 / 5; }
+}
+@media (min-width: 1000px) {
+  .filmstrip { grid-template-columns: repeat(4, 1fr); }
+  .service:nth-child(2n+1) { border-left: 1px solid var(--ink-line); }
+  .service:first-child { border-left: 0; }
+}
+
+/* ------------------------------------------------------------ sectors ---- */
+
+.mosaic {
+  display: grid;
+  grid-template-columns: 1fr;
+  border-top: 1px solid var(--bone-line);
+}
+.sector {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  text-decoration: none;
+  border-left: 1px solid var(--bone-line);
+  border-bottom: 1px solid var(--bone-line);
+}
+.sector:nth-child(2n+1) { border-left: 0; }
+.sector img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(1) contrast(1.04);
+  transition: transform 1.1s var(--ease), filter .7s var(--ease);
+}
+.sector::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(12, 27, 51, .9) 0%, rgba(12, 27, 51, .05) 62%);
+  transition: opacity .5s var(--ease);
+}
+.sector:hover img { transform: scale(1.07); filter: grayscale(0) contrast(1); }
+
+.sector__label {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 1;
+  padding: 1.25rem;
+}
+.sector h3 {
+  font-size: .8125rem;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--on-dark);
+}
+
+/* One sector per row on a phone, so each photograph is actually legible.
+   Two from the larger handsets up, three once there is real width. */
+@media (min-width: 560px) {
+  .mosaic { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 600px) {
+  .mosaic { grid-template-columns: repeat(3, 1fr); }
+  .sector:nth-child(2n+1) { border-left: 1px solid var(--bone-line); }
+  .sector:nth-child(3n+1) { border-left: 0; }
+}
+@media (min-width: 1000px) {
+  .mosaic { grid-template-columns: repeat(4, 1fr); }
+  .sector:nth-child(3n+1) { border-left: 1px solid var(--bone-line); }
+  .sector:nth-child(4n+1) { border-left: 0; }
+  .sector__label { padding: 1.6rem; }
+  .sector h3 { font-size: .875rem; }
+}
+@media (min-width: 1500px) {
+  .mosaic { grid-template-columns: repeat(6, 1fr); }
+  .sector:nth-child(4n+1) { border-left: 1px solid var(--bone-line); }
+  .sector:nth-child(6n+1) { border-left: 0; }
+}
+
+/* ------------------------------------------------------------ pillars ---- */
+
+.ledger { display: grid; gap: clamp(2rem, 4vw, 3.5rem); }
+.ledger__title .display { max-width: 14ch; }
+
+.ledger__list { border-top: 1px solid var(--bone-line); }
+.entry {
+  display: grid;
+  gap: 1.25rem clamp(1.5rem, 3vw, 3rem);
+  padding: clamp(1.75rem, 3vw, 2.5rem) 0;
+  border-bottom: 1px solid var(--bone-line);
+  align-items: start;
+}
+.entry__ico { width: 38px; height: 38px; }
+.entry h3 { margin-bottom: .7rem; }
+.entry p { color: var(--on-light-muted); max-width: 52ch; }
+.entry__thumb { margin: 0; }
+.entry__thumb img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  filter: saturate(.85);
+}
+
+@media (min-width: 700px) {
+  .entry {
+    grid-template-columns: 3.5rem minmax(0, 1fr) minmax(0, 13rem);
+    align-items: center;
+  }
+}
+@media (min-width: 1100px) {
+  .ledger { grid-template-columns: minmax(0, 1fr) minmax(0, 1.9fr); align-items: start; }
+  .ledger__title { position: sticky; top: 7rem; }
+  .ledger__list { border-top: 0; }
+  .entry:first-child { padding-top: 0; }
+  .entry { grid-template-columns: 4rem minmax(0, 1fr) minmax(0, 15rem); }
+}
+
+/* ----------------------------------------------------------- director ---- */
+
+/* The portrait is only 397px wide, so it is never stretched across half the
+   viewport. A bordered plate holds it at a size it can fill, which turns the
+   space around it into deliberate framing rather than a gap. */
+.director__portrait.split__media {
+  display: grid;
+  place-content: center;
+  min-height: 0;
+  padding: clamp(2.5rem, 5vw, 4.5rem) var(--gutter);
+  background: var(--ink-raised);
+}
+
+.director__plate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(1.5rem, 2.5vw, 2rem);
+  width: 100%;
+  max-width: 27rem;
+  margin: 0;
+  padding: clamp(1.75rem, 3vw, 2.75rem);
+  border: 1px solid var(--ink-line-2);
+  background: var(--ink);
+}
+
+/* Undoes the absolute fill that every other .split__media image takes. */
+.director__plate img {
+  position: static;
+  inset: auto;
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  object-position: center 18%;
+  filter: grayscale(1) contrast(1.04);
+}
+
+.director__plate figcaption {
+  position: relative;
+  width: 100%;
+  padding-top: clamp(1.25rem, 2vw, 1.6rem);
+  border-top: 1px solid var(--ink-line);
+  text-align: center;
+}
+
+/* A gold segment laid over the middle of the hairline, matching the rule
+   that hangs off every eyebrow. */
+.director__plate figcaption::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  width: 3rem;
+  height: 1px;
+  margin-left: -1.5rem;
+  background: var(--gold);
+}
+
+.director__plate strong {
+  display: block;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--on-dark);
+}
+.director__plate figcaption span {
+  display: block;
+  margin-top: .35rem;
+  font-size: .625rem;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--gold-text);
+}
+
+.director__note { margin-top: 2rem; max-width: var(--measure); }
+
+/* --------------------------------------------------------------- team ---- */
+
+.roster {
+  display: grid;
+  grid-template-columns: 1fr;
+  border-top: 1px solid var(--bone-line);
+}
+.roster figure {
+  margin: 0;
+  border-left: 1px solid var(--bone-line);
+  border-bottom: 1px solid var(--bone-line);
+}
+.roster figure:nth-child(2n+1) { border-left: 0; }
+.roster img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  filter: grayscale(1);
+  transition: filter .6s var(--ease);
+}
+.roster figure:hover img { filter: grayscale(0); }
+.roster figcaption { padding: 1.25rem clamp(1rem, 1.6vw, 1.5rem) 1.6rem; }
+.roster h3 { font-size: 1rem; }
+.roster p {
+  margin-top: .35rem;
+  font-size: .6875rem;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--gold-text);
+}
+
+/* One face per row on a phone, two from the larger handsets. */
+@media (min-width: 560px) {
+  .roster { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Four across, never more, so the faces stay a readable size. */
+@media (min-width: 700px) {
+  .roster { grid-template-columns: repeat(4, 1fr); }
+  .roster figure:nth-child(2n+1) { border-left: 1px solid var(--bone-line); }
+  .roster figure:nth-child(4n+1) { border-left: 0; }
+}
+
+/* ------------------------------------------------------- testimonials ---- */
+
+.voices { display: grid; border-top: 1px solid var(--ink-line); }
+.voice {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin: 0;
+  padding: clamp(2rem, 3.5vw, 3.25rem) 0;
+  border-bottom: 1px solid var(--ink-line);
+}
+.voice__tag {
+  font-size: .625rem;
+  font-weight: 600;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--gold-text);
+}
+/* Cormorant is a high-contrast display serif. At 300 its thin strokes hold up
+   at headline sizes but wash out at reading size, especially against the warm
+   bone background. Quotes run at 400 for that reason. */
+.voice blockquote {
+  flex: 1;
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(1.375rem, 1.9vw, 1.75rem);
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--on-dark);
+}
+.voice figcaption { display: flex; align-items: center; gap: 1rem; }
+.voice__mono {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  flex: none;
+  border: 1px solid var(--ink-line-2);
+  font-family: var(--display);
+  font-size: 1rem;
+  letter-spacing: .05em;
+  color: var(--gold-text);
+}
+.voice cite { font-style: normal; font-size: .9375rem; font-weight: 600; color: var(--on-dark); }
+.voice cite span { display: block; font-size: .8125rem; font-weight: 400; color: var(--on-dark-muted); }
+
+/* Link out to the full testimonials page, set clear of the last quote. */
+.voices__more { margin-top: clamp(2.5rem, 4vw, 3.5rem); }
+
+@media (min-width: 760px) {
+  .voices { grid-template-columns: repeat(2, 1fr); }
+  .voice {
+    padding-left: clamp(2rem, 3.5vw, 3.5rem);
+    padding-right: clamp(2rem, 3.5vw, 3.5rem);
+    border-left: 1px solid var(--ink-line);
+  }
+  .voice:nth-child(2n+1) { border-left: 0; padding-left: 0; }
+}
+@media (min-width: 1200px) {
+  .voices { grid-template-columns: repeat(3, 1fr); }
+  .voice:nth-child(2n+1) { border-left: 1px solid var(--ink-line); padding-left: clamp(2rem, 3.5vw, 3.5rem); }
+  .voice:nth-child(3n+1) { border-left: 0; padding-left: 0; }
+}
+
+/* The grid is dark by default because the homepage sets it on a dark band.
+   On a light band it takes the bone rules instead. Only colours are swapped,
+   never border widths, so the column rules above stay in charge of which
+   edges are drawn at each breakpoint. */
+.voices--light { border-top-color: var(--bone-line); }
+.voices--light .voice { border-bottom-color: var(--bone-line); }
+.voices--light .voice blockquote { color: var(--on-light); }
+.voices--light .voice__mono { border-color: var(--bone-line-2); }
+.voices--light .voice cite { color: var(--on-light); }
+.voices--light .voice cite span { color: var(--on-light-muted); }
+
+@media (min-width: 760px) {
+  .voices--light .voice { border-left-color: var(--bone-line); }
+}
+@media (min-width: 1200px) {
+  .voices--light .voice:nth-child(2n+1) { border-left-color: var(--bone-line); }
+}
+
+/* ----------------------------------------------------------- partners ---- */
+
+.partners {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--bone-line);
+}
+.partners li {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  padding: clamp(2rem, 3.5vw, 3.25rem) 1.5rem;
+  border-left: 1px solid var(--bone-line);
+  border-bottom: 1px solid var(--bone-line);
+}
+.partners li:nth-child(2n+1) { border-left: 0; }
+/* Every logo is normalised into the same box, whatever its own proportions. */
+.partners img {
+  width: 100%;
+  max-width: 190px;
+  height: 62px;
+  object-fit: contain;
+  filter: grayscale(1);
+  opacity: .55;
+  transition: filter .45s var(--ease), opacity .45s var(--ease);
+}
+.partners li:hover img { filter: grayscale(0); opacity: 1; }
+
+@media (min-width: 800px) {
+  .partners { grid-template-columns: repeat(5, 1fr); }
+  .partners li:nth-child(2n+1) { border-left: 1px solid var(--bone-line); }
+  .partners li:first-child { border-left: 0; }
+}
+
+/* ------------------------------------------------------------ enquiry ---- */
+
+.enquiry { display: grid; }
+.enquiry__intro {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(2.75rem, 5.5vw, 5.5rem) var(--gutter);
+}
+.enquiry__intro > * { max-width: var(--measure-wide); }
+
+.enquiry__panel {
+  padding: clamp(2.5rem, 5vw, 4.5rem) var(--gutter);
+  background: var(--ink-raised);
+  border-top: 1px solid var(--ink-line-2);
+}
+
+.contact-list {
+  margin: 2.25rem 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--ink-line);
+  max-width: var(--measure);
+}
+.contact-list li { padding: 1.15rem 0; border-bottom: 1px solid var(--ink-line); }
+.contact-list b {
+  display: block;
+  margin-bottom: .35rem;
+  font-size: .625rem;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--gold-text);
+}
+.contact-list a { text-decoration: none; }
+.contact-list a:hover { color: var(--gold-lift); }
+.contact-list address { font-style: normal; color: var(--on-dark-muted); }
+
+.form { display: grid; gap: 1.25rem; }
+.form > *, .form__row > * { margin: 0; }
+.form__row { display: grid; gap: 1.25rem; align-items: start; }
+@media (min-width: 560px) { .form__row { grid-template-columns: 1fr 1fr; } }
+
+.field { display: grid; gap: .55rem; margin: 0; }
+.field label {
+  font-size: .625rem;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--on-dark-muted);
+}
+
+/* Marks a required field. Hidden from screen readers, which already
+   announce the input's own required state. */
+.req { color: var(--gold-text); }
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 1rem 1.1rem;
+  background: rgba(246, 243, 237, .04);
+  border: 1px solid var(--ink-line);
+  border-radius: 0;
+  color: var(--on-dark);
+  font: inherit;
+  font-size: .9375rem;
+  transition: border-color .35s var(--ease), background .35s var(--ease);
+}
+.field textarea { min-height: 8.5rem; resize: vertical; }
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--gold-text);
+  background: rgba(246, 243, 237, .07);
+}
+.field input::placeholder,
+.field textarea::placeholder { color: rgba(246, 243, 237, .35); }
+.field select { appearance: none; }
+.field select option { background: var(--ink); color: var(--on-dark); }
+
+/* Validation is handled in script, so the browser's own bubble never fires.
+   An empty required field is marked on the field itself instead. */
+.field.is-invalid input,
+.field.is-invalid select,
+.field.is-invalid textarea {
+  border-color: var(--error);
+  background: rgba(224, 82, 82, .07);
+}
+.field.is-invalid label { color: var(--error); }
+.field__error {
+  display: none;
+  font-size: .75rem;
+  color: var(--error);
+}
+.field.is-invalid .field__error { display: block; }
+
+.form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem 1.5rem;
+}
+.form__note { font-size: .8125rem; color: var(--on-dark-muted); }
+/* Sits under the form. Only ever shown when a send fails, because success
+   navigates straight to the thank-you page. */
+.form__status {
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--error);
+  background: rgba(224, 107, 107, .08);
+  font-size: .875rem;
+  color: var(--error);
+}
+
+.btn:disabled { opacity: .6; cursor: progress; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+@media (min-width: 1000px) {
+  .enquiry { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); }
+  .enquiry__panel { border-top: 0; border-left: 1px solid var(--ink-line-2); }
+}
+
+/* ------------------------------------------------------------- footer ---- */
+
+.site-footer {
+  background: var(--ink);
+  color: var(--on-dark);
+  border-top: 1px solid var(--ink-line-2);
+}
+.footer__grid {
+  display: grid;
+  gap: clamp(2.5rem, 4vw, 4rem);
+  padding-block: clamp(3.5rem, 6vw, 5.5rem);
+}
+.footer__brand img { width: 216px; height: auto; }
+.footer__brand p {
+  max-width: 24rem;
+  margin-top: 1.6rem;
+  font-size: .9375rem;
+  color: var(--on-dark-muted);
+}
+
+.footer__col h3 {
+  margin-bottom: 1.4rem;
+  font-size: .625rem;
+  font-weight: 600;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--gold-text);
+}
+.footer__col ul { margin: 0; padding: 0; list-style: none; }
+.footer__col li + li { margin-top: .75rem; }
+.footer__col a {
+  font-size: .9375rem;
+  text-decoration: none;
+  color: var(--on-dark-muted);
+  transition: color .3s var(--ease);
+}
+.footer__col a:hover { color: var(--gold-lift); }
+.footer__col address { font-style: normal; font-size: .9375rem; color: var(--on-dark-muted); }
+
+/* Menu links carry a small chevron that steps forward on hover. */
+.footer__menu a {
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+}
+.footer__menu .ico {
+  width: 13px;
+  height: 13px;
+  transition: transform .3s var(--ease);
+}
+.footer__menu a:hover .ico { transform: translateX(3px); }
+
+.footer__contact li {
+  display: grid;
+  grid-template-columns: 1.25rem 1fr;
+  gap: .85rem;
+  align-items: start;
+}
+.footer__contact li + li { margin-top: 1rem; }
+.footer__contact .ico { width: 17px; height: 17px; margin-top: .22rem; }
+
+.socials { display: flex; gap: .65rem; margin-top: 2rem; }
+.socials a {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--ink-line);
+  transition: border-color .35s var(--ease), background .35s var(--ease);
+}
+.socials a:hover { border-color: var(--gold-text); background: rgba(184, 150, 74, .1); }
+.socials .ico { width: 18px; height: 18px; opacity: .78; transition: opacity .35s var(--ease); }
+.socials a:hover .ico { opacity: 1; }
+
+.colophon {
+  padding-block: 1.75rem;
+  border-top: 1px solid var(--ink-line);
+  font-size: .8125rem;
+  color: var(--on-dark-muted);
+}
+.colophon p { margin: 0; }
+.colophon a {
+  color: var(--gold-text);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color .3s var(--ease), border-color .3s var(--ease);
+}
+.colophon a:hover { color: var(--gold-lift); border-bottom-color: currentColor; }
+
+/* On a phone the two short link lists share a row instead of stacking, which
+   cuts a lot of scrolling out of the footer. The brand block and the contact
+   details keep the full width, because the address needs the measure. */
+@media (max-width: 759px) {
+  .footer__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: clamp(1.25rem, 6vw, 2.5rem);
+    row-gap: clamp(2rem, 7vw, 2.75rem);
+  }
+  .footer__brand,
+  .footer__col:last-child { grid-column: 1 / -1; }
+}
+
+@media (min-width: 760px) { .footer__grid { grid-template-columns: 1.5fr 1fr 1fr; } }
+@media (min-width: 1100px) { .footer__grid { grid-template-columns: 1.7fr 1fr 1fr 1.2fr; } }
+
+/* ------------------------------------------------------------- thanks ---- */
+
+/* Confirmation page shown after the enquiry form posts. A single centred
+   column that holds the full viewport, so the message lands without a scroll. */
+.thanks {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding-top: 9rem;
+  background: var(--ink);
+  color: var(--on-dark);
+  text-align: center;
+}
+
+.thanks__mark {
+  width: 84px;
+  height: 84px;
+  margin: 0 auto clamp(2rem, 4vw, 3rem);
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--ink-line-2);
+  border-radius: 50%;
+}
+.thanks__mark img { width: 34px; height: 34px; }
+
+/* The eyebrow hangs one rule to its left everywhere else. Centred here, it
+   needs a matching rule on the right to stay symmetrical. */
+.thanks .eyebrow { justify-content: center; }
+.thanks .eyebrow::after {
+  content: '';
+  width: clamp(1.75rem, 3.5vw, 3.5rem);
+  height: 1px;
+  background: currentColor;
+  flex: none;
+}
+
+.thanks .display { margin-inline: auto; }
+.thanks .lead { margin-inline: auto; max-width: 40rem; color: var(--on-dark-muted); }
+
+.thanks__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: .9rem;
+  margin-top: clamp(2.25rem, 4vw, 3rem);
+}
+
+.thanks__meta {
+  max-width: 40rem;
+  margin-top: clamp(2.5rem, 4.5vw, 3.5rem);
+  margin-inline: auto;
+  padding-top: clamp(1.75rem, 3vw, 2.25rem);
+  border-top: 1px solid var(--ink-line);
+  font-size: .9375rem;
+  color: var(--on-dark-muted);
+}
+.thanks__meta a { color: var(--gold-text); text-decoration: none; transition: color .3s var(--ease); }
+.thanks__meta a:hover { color: var(--gold-lift); }
+
+/* ==========================================================================
+   Inner pages. Everything below is used by about, service, industry,
+   testimonials, careers and contact.
+   ========================================================================== */
+
+/* ---------------------------------------------------------- page hero ---- */
+
+/* Every inner page opens the same way: a photograph held back behind a dark
+   wash, with the title sitting on the baseline. Only the photograph changes
+   from page to page. */
+.page-hero {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: clamp(21rem, 40vw, 31rem);
+  padding-top: clamp(7rem, 12vw, 10rem);
+  padding-bottom: clamp(2.75rem, 5vw, 4.5rem);
+  background: var(--ink);
+  color: var(--on-dark);
+  overflow: hidden;
+}
+.page-hero__media { position: absolute; inset: 0; }
+.page-hero__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: .3;
+}
+
+/* Only the homepage hero has a photograph wide enough to fill a banner. The
+   other pages lay four of the square ones side by side instead, which keeps
+   every image at roughly its native size rather than stretching one of them. */
+.page-hero__media--strip { display: grid; grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 700px) {
+  .page-hero__media--strip { grid-template-columns: repeat(4, 1fr); }
+}
+.page-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(12, 27, 51, .82) 0%, rgba(12, 27, 51, .5) 45%, var(--ink) 100%);
+}
+.page-hero__inner { position: relative; z-index: 1; width: 100%; }
+.page-hero h1 { max-width: 18ch; }
+.page-hero .lead {
+  margin-top: 1.5rem;
+  max-width: 42rem;
+  color: var(--on-dark-muted);
+}
+
+/* Breadcrumb trail, set above the title. */
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .6rem;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+  font-size: .6875rem;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--on-dark-muted);
+}
+.crumbs a { color: var(--gold-text); text-decoration: none; transition: color .3s var(--ease); }
+.crumbs a:hover { color: var(--gold-lift); }
+.crumbs li + li::before { content: "/"; margin-right: .6rem; opacity: .5; }
+.crumbs [aria-current] { color: var(--on-dark); }
+
+/* -------------------------------------------------------- prose split ---- */
+
+/* A narrative opening: heading held left, the argument set in two columns
+   beside it so long copy never runs to an unreadable measure. */
+.prose-split { display: grid; gap: clamp(2rem, 4vw, 3.5rem); }
+.prose-split__body { display: grid; gap: clamp(1.5rem, 2.5vw, 2.25rem); }
+.prose-split__body p { max-width: 38rem; }
+
+@media (min-width: 900px) {
+  .prose-split { grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); }
+  .prose-split__body { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .prose-split__body p { max-width: none; }
+}
+
+/* ------------------------------------------------------------ values ---- */
+
+/* Ruled cells rather than boxes, so the grid reads as a contents list
+   rather than a row of cards. */
+.values {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--bone-line);
+}
+.values li {
+  padding: clamp(1.85rem, 3vw, 2.6rem) 0;
+  border-bottom: 1px solid var(--bone-line);
+}
+.values .ico { width: 30px; height: 30px; margin-bottom: 1.4rem; }
+.values h3 { margin-bottom: .75rem; }
+.values p { max-width: 32rem; color: var(--on-light-muted); }
+
+.band--dark .values { border-top-color: var(--ink-line); }
+.band--dark .values li { border-bottom-color: var(--ink-line); }
+
+@media (min-width: 760px) {
+  .values { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(2rem, 4vw, 4.5rem); }
+}
+@media (min-width: 1200px) {
+  .values { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+
+/* ------------------------------------------------------------ switcher ---- */
+
+/* Pick a freight mode or a sector and only that one's title, description and
+   photographs are shown. Hidden panels use the hidden attribute, so the
+   photographs inside them are never downloaded until their tab is chosen. */
+.switch__tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--ink-line);
+  border: 1px solid var(--ink-line);
+}
+.switch__tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .75rem;
+  min-height: 6.5rem;
+  padding: 1.25rem .85rem;
+  background: var(--ink-raised);
+  border: 0;
+  cursor: pointer;
+  font-size: .6875rem;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--on-dark-muted);
+  transition: background .35s var(--ease), color .35s var(--ease);
+}
+.switch__tab .ico { width: 30px; height: 30px; transition: transform .35s var(--ease); }
+.switch__tab:hover { background: var(--ink); color: var(--on-dark); }
+.switch__tab:hover .ico { transform: translateY(-3px); }
+
+/* The chosen tab reverses to gold. The icons are gold-stroked SVG files, so
+   they are brightened to near-black to stay legible on it. */
+.switch__tab[aria-selected='true'] {
+  background: var(--gold);
+  color: var(--ink);
+}
+.switch__tab[aria-selected='true'] .ico { filter: brightness(0) saturate(100%) opacity(.82); }
+
+.switch__panel { padding-top: clamp(2.25rem, 4vw, 3.5rem); }
+.switch__panel[hidden] { display: none; }
+
+.switch__intro { margin-bottom: clamp(1.75rem, 3vw, 2.5rem); }
+.switch__intro h3 {
+  max-width: 20ch;
+  font-family: var(--display);
+  font-weight: 300;
+  font-size: clamp(1.85rem, 3.4vw, 3rem);
+  line-height: 1.06;
+  letter-spacing: -.018em;
+}
+.switch__intro p {
+  max-width: 44rem;
+  margin-top: 1.35rem;
+  font-size: clamp(1rem, 1.25vw, 1.125rem);
+  line-height: 1.7;
+}
+
+/* Photographs sit edge to edge in a ruled grid, the same language as the
+   sector mosaic on the homepage. */
+/* Photographs are separated by a real gap. They used to be butted together
+   with a 1px gap over a coloured container, but that container also showed
+   through wherever a row ran short, leaving an empty grey cell. With a plain
+   gap an unfilled cell simply shows the band behind it. */
+.gallery {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(.5rem, .9vw, .9rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.gallery img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  transition: transform .6s var(--ease), opacity .4s var(--ease);
+}
+.gallery li { overflow: hidden; }
+.gallery li:hover img { transform: scale(1.045); }
+
+/* Road freight has only the one photograph so far. Rather than leave it
+   sitting in a quarter of an empty grid, it runs the full width. */
+/* Doubled class so this beats the column counts in the width queries below,
+   whatever order they end up in. */
+.gallery.gallery--sparse { grid-template-columns: minmax(0, 1fr); }
+.gallery--sparse img { aspect-ratio: 21 / 9; }
+
+/* One photograph per row on a phone. At two the cargo in each shot was too
+   small to make out, which is the whole point of the gallery. */
+@media (min-width: 560px) {
+  .gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 700px) {
+  .switch__tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 1100px) {
+  .gallery { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* ---------------------------------------------------------- lightbox ---- */
+
+/* The overlay markup is built by script on first use, so no page carries it
+   in its source. Gallery photographs advertise themselves as enlargeable. */
+.gallery li { cursor: zoom-in; }
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 1rem;
+  padding: clamp(1rem, 3vw, 2.5rem);
+  background: rgba(6, 14, 26, .95);
+  animation: mega-in .25s var(--ease) both;
+}
+.lightbox[hidden] { display: none; }
+
+.lightbox__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--on-dark-muted);
+  font-size: .6875rem;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+
+.lightbox__stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  margin: 0;
+}
+.lightbox__stage img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border: 1px solid var(--ink-line-2);
+}
+
+.lightbox__cap {
+  min-height: 1.5rem;
+  text-align: center;
+  font-size: .9375rem;
+  color: var(--on-dark-muted);
+}
+
+.lightbox button {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--ink-line);
+  cursor: pointer;
+  color: var(--on-dark);
+  transition: border-color .3s var(--ease), background .3s var(--ease), color .3s var(--ease);
+}
+.lightbox button:hover { border-color: var(--gold-text); background: rgba(184, 150, 74, .12); color: var(--gold-lift); }
+.lightbox button[disabled] { opacity: .3; cursor: default; }
+.lightbox button[disabled]:hover { border-color: var(--ink-line); background: none; color: var(--on-dark); }
+
+/* Arrows and cross drawn from borders, so the overlay needs no icon files. */
+.lightbox__glyph {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+}
+.lightbox__prev .lightbox__glyph { transform: translateX(2px) rotate(135deg); }
+.lightbox__next .lightbox__glyph { transform: translateX(-2px) rotate(-45deg); }
+.lightbox__close .lightbox__glyph {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  background:
+    linear-gradient(currentColor, currentColor) center / 100% 1.5px no-repeat,
+    linear-gradient(currentColor, currentColor) center / 1.5px 100% no-repeat;
+  transform: rotate(45deg);
+}
+
+.lightbox__nav { display: flex; gap: .6rem; }
+
+/* The switcher is dark by default. On a light band the tabs, the panel and
+   the gallery rules take the bone palette instead, so a page can alternate
+   light and dark properly rather than stacking two navies. The selected tab
+   keeps its gold and needs the extra weight to beat the rule above it. */
+.switch--light .switch__tabs { background: var(--bone-line); border-color: var(--bone-line); }
+.switch--light .switch__tab { background: var(--bone); color: var(--on-light-muted); }
+.switch--light .switch__tab:hover { background: var(--bone-sink); color: var(--on-light); }
+.switch--light .switch__tab[aria-selected='true'] { background: var(--gold); color: var(--ink); }
+
+/* Twelve sectors need more rows than four freight modes do, and they have no
+   icon of their own, so those tabs are set as plain labels. */
+/* Sector tabs carry a photograph rather than a drawn icon, the same treatment
+   the Industries mega menu uses, so the two read as one system. The thumbnail
+   sits beside the label rather than above it, which keeps twelve tabs from
+   turning into a tall block. */
+.switch--sectors .switch__tabs { grid-template-columns: minmax(0, 1fr); }
+.switch--sectors .switch__tab {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: .85rem;
+  min-height: 0;
+  padding: .55rem .8rem;
+  text-align: left;
+}
+.switch--sectors .switch__tab img {
+  width: 2.6rem;
+  height: 2.6rem;
+  flex: none;
+  object-fit: cover;
+}
+
+/* The chosen tab reverses to navy, not to gold. A photograph sitting on a
+   gold field reads as a mistake; on navy it reads as selected. */
+.switch--sectors .switch__tab[aria-selected='true'],
+.switch--light.switch--sectors .switch__tab[aria-selected='true'] {
+  background: var(--ink);
+  color: var(--on-dark);
+}
+
+@media (min-width: 560px) {
+  .switch--sectors .switch__tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 900px) {
+  .switch--sectors .switch__tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 1300px) {
+  .switch--sectors .switch__tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* ----------------------------------------------------------- process ---- */
+
+/* Numbered steps, each opening under its own rule. */
+.process {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+.process li {
+  counter-increment: step;
+  padding: clamp(1.85rem, 3vw, 2.5rem) 0;
+  border-top: 1px solid var(--bone-line);
+}
+.process li::before {
+  content: counter(step, decimal-leading-zero);
+  display: block;
+  margin-bottom: 1.1rem;
+  font-family: var(--display);
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--gold-text);
+  font-variant-numeric: lining-nums;
+}
+.process h3 { margin-bottom: .7rem; }
+.process p { font-size: .9375rem; color: var(--on-light-muted); max-width: 26rem; }
+
+/* Steps are written for a light band. These two lines let the same markup sit
+   on a dark one, which is what keeps a page alternating. */
+.band--dark .process li { border-top-color: var(--ink-line); }
+.band--dark .process p { color: var(--on-dark-muted); }
+
+@media (min-width: 700px) {
+  .process { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(2rem, 4vw, 4rem); }
+}
+@media (min-width: 1100px) {
+  .process { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ------------------------------------------------------------ addons ---- */
+
+.addons {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--ink-line);
+}
+.addons li {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+  padding: clamp(1.6rem, 2.6vw, 2.15rem) 0;
+  border-bottom: 1px solid var(--ink-line);
+}
+.addons .ico { width: 26px; height: 26px; margin-top: .2rem; }
+.addons h3 { margin-bottom: .5rem; font-size: 1.0625rem; }
+.addons p { font-size: .9375rem; color: var(--on-dark-muted); }
+
+/* The mirror of the above: this list is written dark, so it needs the bone
+   rules to sit on a light band. */
+.addons--light { border-top-color: var(--bone-line); }
+.addons--light li { border-bottom-color: var(--bone-line); }
+.addons--light p { color: var(--on-light-muted); }
+
+@media (min-width: 800px) {
+  .addons { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(2.5rem, 5vw, 5rem); }
+}
+
+
+/* ------------------------------------------------------ voice feature ---- */
+
+/* One quote pulled out at display size, ahead of the grid of the rest. */
+.voice--lead {
+  margin: 0;
+  padding: clamp(2.5rem, 5vw, 4.5rem) 0 0;
+  text-align: center;
+}
+.voice--lead blockquote {
+  margin: 0 auto;
+  max-width: 26ch;
+  font-family: var(--display);
+  font-weight: 400;
+  font-style: italic;
+  font-size: clamp(1.85rem, 3.6vw, 3.15rem);
+  line-height: 1.24;
+}
+.voice--lead figcaption {
+  margin-top: clamp(2rem, 3.5vw, 2.75rem);
+  text-align: center;
+}
+.voice--lead cite {
+  font-style: normal;
+  font-size: .9375rem;
+  font-weight: 600;
+}
+/* The feature quote and the grid now share one band, so the grid needs its
+   own clearance rather than relying on a section boundary. */
+.voice--lead + .voices { margin-top: clamp(2.5rem, 4.5vw, 4rem); }
+
+.voice--lead cite span {
+  display: block;
+  margin-top: .3rem;
+  font-size: .6875rem;
+  font-weight: 600;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--gold-text);
+}
+
+/* ------------------------------------------------------------- perks ---- */
+
+.perks {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  gap: 1px;
+  background: var(--ink-line);
+  border: 1px solid var(--ink-line);
+}
+.perks li {
+  padding: clamp(1.85rem, 3vw, 2.5rem);
+  background: var(--ink);
+}
+.perks .ico { width: 28px; height: 28px; margin-bottom: 1.3rem; }
+.perks h3 { margin-bottom: .65rem; font-size: 1.0625rem; }
+.perks p { font-size: .9375rem; color: var(--on-dark-muted); }
+
+@media (min-width: 700px) { .perks { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .perks { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* ------------------------------------------------------------- roles ---- */
+
+.roles { display: grid; border-top: 1px solid var(--bone-line); }
+.role {
+  display: grid;
+  gap: 1.25rem;
+  padding: clamp(1.85rem, 3vw, 2.6rem) 0;
+  border-bottom: 1px solid var(--bone-line);
+  align-items: center;
+}
+.role h3 { font-size: clamp(1.2rem, 1.8vw, 1.45rem); }
+.role p { margin-top: .6rem; font-size: .9375rem; color: var(--on-light-muted); max-width: 34rem; }
+.role__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: .6875rem;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--on-light-muted);
+}
+.role__meta b { display: block; margin-bottom: .3rem; color: var(--gold-text); font-weight: 600; }
+
+@media (min-width: 900px) {
+  .role { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; gap: clamp(1.5rem, 3vw, 3rem); }
+}
+
+/* --------------------------------------------------------------- faq ---- */
+
+.faq { border-top: 1px solid var(--bone-line); }
+.faq details { border-bottom: 1px solid var(--bone-line); }
+.faq summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: clamp(1.25rem, 2.2vw, 1.75rem) 0;
+  font-size: clamp(1.0625rem, 1.5vw, 1.2rem);
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after {
+  content: "";
+  flex: none;
+  width: 11px;
+  height: 11px;
+  border-right: 1px solid var(--gold);
+  border-bottom: 1px solid var(--gold);
+  transform: rotate(45deg) translateY(-3px);
+  transition: transform .35s var(--ease);
+}
+.faq details[open] summary::after { transform: rotate(225deg) translateY(-3px); }
+.faq p {
+  padding-bottom: clamp(1.25rem, 2.2vw, 1.75rem);
+  color: var(--on-light-muted);
+  max-width: 46rem;
+}
+
+/* ------------------------------------------------------------ contact ---- */
+
+.contact-cards {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--bone-line);
+  border: 1px solid var(--bone-line);
+}
+.contact-card { padding: clamp(1.85rem, 3vw, 2.75rem); background: var(--bone); }
+.contact-card .ico { width: 26px; height: 26px; margin-bottom: 1.3rem; }
+.contact-card h3 {
+  margin-bottom: .9rem;
+  font-size: .625rem;
+  font-weight: 600;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--gold-text);
+}
+.contact-card address,
+.contact-card p { font-style: normal; font-size: 1rem; color: var(--on-light); }
+.contact-card a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--bone-line-2); }
+.contact-card a:hover { color: var(--gold-text); }
+.contact-card small { display: block; margin-top: .65rem; font-size: .875rem; color: var(--on-light-muted); }
+
+@media (min-width: 700px) { .contact-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .contact-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+/* The map is framed like a photograph and only loads as it scrolls near. */
+.map {
+  margin: 0;
+  border: 1px solid var(--bone-line);
+  line-height: 0;
+}
+.map iframe {
+  display: block;
+  width: 100%;
+  height: clamp(20rem, 42vw, 30rem);
+  border: 0;
+  filter: grayscale(1) contrast(1.05);
+}
+
+/* ----------------------------------------------------------- cta band ---- */
+
+.cta { text-align: center; }
+.cta .eyebrow { justify-content: center; }
+.cta .eyebrow::after {
+  content: "";
+  width: clamp(1.75rem, 3.5vw, 3.5rem);
+  height: 1px;
+  background: currentColor;
+  flex: none;
+}
+.cta .display { margin-inline: auto; }
+.cta .lead { margin-inline: auto; max-width: 40rem; }
+.cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: .9rem;
+  margin-top: clamp(2.25rem, 4vw, 3rem);
+}
+
+/* ------------------------------------------------------------- reveal ---- */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity .9s var(--ease), transform .9s var(--ease);
+}
+.reveal.is-in { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    transition-duration: .001ms !important;
+  }
+}
